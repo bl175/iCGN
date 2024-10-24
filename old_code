@@ -407,38 +407,38 @@ const CancerPedigreeApp = () => {
     return newColor;
   }, [cancerColors]);
 
-  const addFamilyMember = (originId, relationType) => {
-    const origin = familyMembers.find(member => member.id === originId);
-    let newX = origin.x;
-    let newY = origin.y;
+  const addFamilyMember = (parentId, relationType) => {
+    const parent = familyMembers.find(member => member.id === parentId);
+    let newX = parent.x;
+    let newY = parent.y;
     let relationship = relationType;
     let spouseId = null;
     let sex = 'female'; // Default sex
 
     if (relationType === 'child') {
-      if (!origin.spouseId) {
+      if (!parent.spouseId) {
         console.error("Cannot add child without a spouse");
         return;
       }
-      newY = origin.y + 100;
-      const spouse = familyMembers.find(m => m.id === origin.spouseId);
-      const existingChildren = familyMembers.filter(m => m.parentId === originId || m.parentId === origin.spouseId);
+      newY = parent.y + 100;
+      const spouse = familyMembers.find(m => m.id === parent.spouseId);
+      const existingChildren = familyMembers.filter(m => m.parentId === parentId || m.parentId === parent.spouseId);
       if (existingChildren.length > 0) {
         const lastChild = existingChildren[existingChildren.length - 1];
         newX = lastChild.x + 50;
       } else {
-        newX = (origin.x + spouse.x) / 2;
+        newX = (parent.x + spouse.x) / 2;
       }
     } else if (relationType === 'spouse') {
       relationship = 'unrelated_spouse'; // Default to unrelated_spouse
-      newX = origin.x + 100;
-      newY = origin.y;
-      spouseId = origin.id;
-      // Set the sex opposite to the origin's sex
-      sex = origin.sex === 'male' ? 'female' : 'male';
+      newX = parent.x + 100;
+      newY = parent.y;
+      spouseId = parent.id;
+      // Set the sex opposite to the parent's sex
+      sex = parent.sex === 'male' ? 'female' : 'male';
     } else if (relationType === 'parent') {
-      newY = origin.y - 100;
-      newX = origin.x - 50; // Offset slightly to the left
+      newY = parent.y - 100;
+      newX = parent.x - 50; // Offset slightly to the left
       relationship = 'parent';
       sex = 'male'; // Set sex to male for parent
     }
@@ -454,7 +454,7 @@ const CancerPedigreeApp = () => {
       relationship: relationship,
       x: newX,
       y: newY,
-      parentId: relationType === 'parent' ? null : (relationType === 'child' ? originId : null),
+      parentId: relationType === 'parent' ? null : (relationType === 'child' ? parentId : null),
       spouseId: spouseId,
       marriageType: relationType === 'spouse' ? 'non-consanguineous' : null
     };
@@ -468,7 +468,7 @@ const CancerPedigreeApp = () => {
       }
       if (relationType === 'parent') {
         updatedMembers = updatedMembers.map(member => 
-          member.id === originId ? { ...member, parentId: newMember.id } : member
+          member.id === parentId ? { ...member, parentId: newMember.id } : member
         );
       }
       return updatedMembers;
@@ -559,27 +559,43 @@ const CancerPedigreeApp = () => {
   };
 
   const handleKeyDown = (e) => {
-    if (e.ctrlKey && e.key === 'z') {
-      handleUndo();
-    } else {
-      const moveAmount = 10;
-      switch (e.key) {
-        case 'ArrowUp':
-          setOffset(prev => ({ ...prev, y: prev.y + moveAmount }));
-          break;
-        case 'ArrowDown':
-          setOffset(prev => ({ ...prev, y: prev.y - moveAmount }));
-          break;
-        case 'ArrowLeft':
-          setOffset(prev => ({ ...prev, x: prev.x + moveAmount }));
-          break;
-        case 'ArrowRight':
-          setOffset(prev => ({ ...prev, x: prev.x - moveAmount }));
-          break;
-        default:
-          break;
-      }
+
+    const moveAmount = 10;
+
+    switch (e.key) {
+
+      case 'ArrowUp':
+
+        setOffset(prev => ({ ...prev, y: prev.y + moveAmount }));
+
+        break;
+
+      case 'ArrowDown':
+
+        setOffset(prev => ({ ...prev, y: prev.y - moveAmount }));
+
+        break;
+
+      case 'ArrowLeft':
+
+        setOffset(prev => ({ ...prev, x: prev.x + moveAmount }));
+
+        break;
+
+      case 'ArrowRight':
+
+        setOffset(prev => ({ ...prev, x: prev.x - moveAmount }));
+
+        break;
+
+      case 'z':
+        if (e.ctrlKey) {
+          handleUndo();
+        }
+        break;
+
     }
+
   };
 
   const handleCanvasClick = (e) => {
@@ -941,159 +957,236 @@ const CancerPedigreeApp = () => {
 
   const saveAsCSV = () => {
     const headers = [
-        "ID", "Name", "Sex", "Age at Diagnosis", "Cancers", "Genetics", 
-        "Is Deceased", "Relationship", "Parent ID"
+      "ID", "Name", "Sex", "Age at Diagnosis", "Cancers", "Genetics", 
+      "Is Deceased", "Relationship", "Parent ID", "Spouse ID"
     ];
 
-    // Create a map to assign new IDs starting from 1
-    const idMap = {};
-    familyMembers.forEach((member, index) => {
-        idMap[member.id] = (index + 1).toString(); // Assign new ID starting from 1
-    });
-
     const csvContent = familyMembers.map(member => [
-        idMap[member.id], // Use new ID
-        member.name,
-        member.sex,
-        member.ageAtDiagnosis,
-        member.cancers,
-        member.genetics,
-        member.isDead,
-        member.relationship,
-        member.parentId ? idMap[member.parentId] : '' // Reference parent using new ID
+      member.id,
+      member.name,
+      member.sex,
+      member.ageAtDiagnosis,
+      member.cancers,
+      member.genetics,
+      member.isDead,
+      member.relationship,
+      member.parentId || '',
+      member.spouseId || ''
     ]);
 
     const csvString = [
-        headers.join(','),
-        ...csvContent.map(row => row.join(','))
+      headers.join(','),
+      ...csvContent.map(row => row.join(','))
     ].join('\n');
 
     const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
     if (link.download !== undefined) {
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", "pedigree_data.csv");
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", "pedigree_data.csv");
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   };
   const makePedigree = (familyMembers) => {
-    // Create a map of family members by ID for easy lookup
-    const membersById = {};
-    familyMembers.forEach(member => {
-        membersById[member.id] = member;
+  // Create a map of family members by ID for easy lookup
+  const membersById = {};
+  familyMembers.forEach(member => {
+    membersById[member.id] = member;
+  });
+
+  // Find the proband
+  const proband = familyMembers.find(m => m.relationship === 'proband') || familyMembers[0];
+  proband.x = 325;
+  proband.y = 325;
+
+  // Keep track of visited members to avoid infinite loops
+  const visited = new Set();
+
+  // Recursive function to position members
+  const positionMembers = (memberId, x, y) => {
+    if (visited.has(memberId)) return;
+    visited.add(memberId);
+
+    const member = membersById[memberId];
+    if (!member) return;
+
+    member.x = x;
+    member.y = y;
+
+    // Position spouse
+    if (member.spouseId) {
+      const spouse = membersById[member.spouseId];
+      if (spouse && !visited.has(spouse.id)) {
+        const spouseX = x + 100;
+        const spouseY = y;
+        positionMembers(spouse.id, spouseX, spouseY);
+      }
+    }
+
+    // Position children
+    const children = familyMembers.filter(m => 
+      m.parentId === member.id || 
+      (member.spouseId && m.parentId === member.spouseId)
+    );
+    children.forEach((child, index) => {
+      const childX = x + index * 50 - ((children.length - 1) * 25);
+      const childY = y + 100;
+      positionMembers(child.id, childX, childY);
     });
 
-    // Find the proband
-    const proband = familyMembers.find(m => m.relationship === 'proband') || familyMembers[0];
-    proband.x = 325;
-    proband.y = 325;
-
-    // Keep track of visited members to avoid infinite loops
-    const visited = new Set();
-
-    // Recursive function to position members
-    const positionMembers = (memberId, x, y) => {
-        if (visited.has(memberId)) return;
-        visited.add(memberId);
-
-        const member = membersById[memberId];
-        if (!member) return;
-
-        member.x = x;
-        member.y = y;
-
-        // Position children
-        const children = familyMembers.filter(m => m.parentId === memberId);
-        children.forEach((child, index) => {
-            const childX = x + index * 50;
-            const childY = y + 100;
-            positionMembers(child.id, childX, childY);
-        });
-
-        // Optionally position parents
-        if (member.parentId) {
-            const parent = membersById[member.parentId];
-            if (parent && !visited.has(parent.id)) {
-                const parentX = x;
-                const parentY = y - 100;
-                positionMembers(parent.id, parentX, parentY);
-            }
-        }
-    };
-
-    // Start positioning from the proband
-    positionMembers(proband.id, proband.x, proband.y);
-
-    return familyMembers;
+    // Position parents (optional, if you have parent relationships)
+    if (member.parentId) {
+      const parent = membersById[member.parentId];
+      if (parent && !visited.has(parent.id)) {
+        const parentX = x;
+        const parentY = y - 100;
+        positionMembers(parent.id, parentX, parentY);
+      }
+    }
   };
+
+  // Start positioning from the proband
+  positionMembers(proband.id, proband.x, proband.y);
+
+  return familyMembers;
+};
 
 
   const importFromCSV = (event) => {
     const file = event.target.files[0];
     if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const content = e.target.result;
-            const lines = content.split('\n').filter(line => line.trim() !== ''); // Remove empty lines
-            const headers = lines[0].split(',');
-
-            const headerMap = {
-                'id': 'id',
-                'name': 'name',
-                'sex': 'sex',
-                'age at diagnosis': 'ageAtDiagnosis',
-                'cancers': 'cancers',
-                'genetics': 'genetics',
-                'is deceased': 'isDead',
-                'relationship': 'relationship',
-                'parent id': 'parentId',
-                // Removed spouse id mapping
-            };
-
-            // Parse the CSV into member objects
-            let importedMembers = lines.slice(1).map(line => {
-                const values = line.split(',');
-                const member = {};
-                headers.forEach((header, index) => {
-                    const key = header.trim().toLowerCase();
-                    const mappedKey = headerMap[key];
-                    const value = values[index]?.trim();
-                    if (mappedKey) {
-                        if (mappedKey === 'isDead') {
-                            member[mappedKey] = value === 'true';
-                        } else {
-                            member[mappedKey] = value;
-                        }
-                    }
-                });
-                return {
-                    ...member,
-                    x: null,
-                    y: null,
-                };
-            });
-
-            // Assign IDs starting from 1 for proband and incrementing
-            importedMembers.forEach((member, index) => {
-                member.id = (index + 1).toString(); // Set ID starting from 1
-                member.spouseId = null; // Ensure spouseId is removed
-            });
-
-            // Find the proband and set initial position
-            const proband = importedMembers.find(m => m.relationship === 'proband') || importedMembers[0];
-            proband.x = 325;
-            proband.y = 325;
-
-            // Update the state with imported and positioned members
-            setFamilyMembers(importedMembers);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target.result;
+        const lines = content.split('\n').filter(line => line.trim() !== ''); // Remove empty lines
+        const headers = lines[0].split(',');
+  
+        const headerMap = {
+          'id': 'id',
+          'name': 'name',
+          'sex': 'sex',
+          'age at diagnosis': 'ageAtDiagnosis',
+          'cancers': 'cancers',
+          'genetics': 'genetics',
+          'is deceased': 'isDead',
+          'relationship': 'relationship',
+          'parent id': 'parentId',
+          'spouse id': 'spouseId',
         };
-        reader.readAsText(file);
+  
+        // Parse the CSV into member objects
+        let importedMembers = lines.slice(1).map(line => {
+          const values = line.split(',');
+          const member = {};
+          headers.forEach((header, index) => {
+            const key = header.trim().toLowerCase();
+            const mappedKey = headerMap[key];
+            const value = values[index]?.trim();
+            if (mappedKey) {
+              if (mappedKey === 'isDead') {
+                member[mappedKey] = value === 'true';
+              } else {
+                member[mappedKey] = value;
+              }
+            }
+          });
+          return {
+            ...member,
+            x: null,
+            y: null,
+          };
+        });
+  
+        // Build an ID map to handle missing or duplicate IDs
+        const idMap = {};
+        const existingIds = new Set();
+  
+        importedMembers.forEach(member => {
+          let oldId = member.id;
+          if (!oldId || existingIds.has(oldId)) {
+            // Generate a new unique ID
+            const newId = Date.now().toString() + Math.random().toString(36).substr(2, 5);
+            idMap[oldId] = newId;
+            member.id = newId;
+            existingIds.add(newId);
+          } else {
+            idMap[oldId] = oldId;
+            existingIds.add(oldId);
+          }
+        });
+  
+        // Update parentId and spouseId using the ID map
+        importedMembers.forEach(member => {
+          if (member.parentId) {
+            member.parentId = idMap[member.parentId] || member.parentId;
+          }
+          if (member.spouseId) {
+            member.spouseId = idMap[member.spouseId] || member.spouseId;
+          }
+        });
+  
+        // Find the proband and set initial position
+        const proband = importedMembers.find(m => m.relationship === 'proband') || importedMembers[0];
+        proband.x = 325;
+        proband.y = 325;
+  
+        const visited = new Set();
+  
+        // Recursive function to position members
+        const positionMembers = (memberId, startX, startY, isSpouse = false) => {
+          if (visited.has(memberId)) return;
+          visited.add(memberId);
+  
+          const member = importedMembers.find(m => m.id === memberId);
+          if (!member) return;
+  
+          member.x = startX;
+          member.y = startY;
+  
+          // Position spouse
+          if (member.spouseId) {
+            const spouse = importedMembers.find(m => m.id === member.spouseId);
+            if (spouse && !visited.has(spouse.id)) {
+              spouse.x = startX + 100;
+              spouse.y = startY;
+              positionMembers(spouse.id, spouse.x, spouse.y, true);
+            }
+          }
+  
+          // Position children
+          const children = importedMembers.filter(m => m.parentId === memberId);
+          children.forEach((child, index) => {
+            const childX = startX + index * 50;
+            const childY = startY + 100;
+            positionMembers(child.id, childX, childY);
+          });
+  
+          // Optionally position parents
+          if (member.parentId && !isSpouse) {
+            const parent = importedMembers.find(m => m.id === member.parentId);
+            if (parent && !visited.has(parent.id)) {
+              const parentX = startX;
+              const parentY = startY - 100;
+              positionMembers(parent.id, parentX, parentY);
+            }
+          }
+        };
+  
+        // Start positioning from the proband
+        positionMembers(proband.id, proband.x, proband.y);
+  
+        // Update the state with imported and positioned members
+        setFamilyMembers(importedMembers);
+      };
+      reader.readAsText(file);
     }
-};
+  };
+  
+  
 
   const handleMove = (direction) => {
     const moveAmount = 10;
@@ -1219,15 +1312,6 @@ const CancerPedigreeApp = () => {
 
   const handleFormClick = (memberId) => {
     setHighlightedMember(memberId);
-  };
-
-  // Add this function inside the CancerPedigreeApp component
-  const handleUndo = () => {
-    if (undoStack.length > 0) {
-      const previousState = undoStack[undoStack.length - 1];
-      setFamilyMembers(previousState);
-      setUndoStack(prevStack => prevStack.slice(0, -1));
-    }
   };
 
   return (
