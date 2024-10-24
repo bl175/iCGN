@@ -1,0 +1,20 @@
+.options-box {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  border: 1px solid #ccc;
+  padding: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  overflow: never;
+}
+
+.options-box button {
+  margin: 0 5px;
+}
+
+/* In your global CSS file (e.g., index.css or App.css) */
+body {
+    overflow: hidden;
+  }
