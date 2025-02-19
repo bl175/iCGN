@@ -1319,7 +1319,7 @@ const CancerPedigreeApp = () => {
   return (
     <div className="p-4 flex" onKeyDown={handleKeyDown} tabIndex="0">
       <div className="flex-grow flex flex-col lg:flex-row">
-        <div className="w-full lg:w-1/2 pr-4 overflow-y-auto" style={{maxHeight: 'calc(100vh - 2rem)'}}>
+        <div className="w-full lg:w-1/2 pr-4 overflow-y-auto max-h-[calc(100vh-2rem)]" style={{ scrollbarWidth: 'thin' }}>
           {familyMembers.map((member) => {
             let relatedMemberName = '';
             
@@ -1330,7 +1330,6 @@ const CancerPedigreeApp = () => {
               const spouse = familyMembers.find(m => m.id === member.spouseId);
               relatedMemberName = spouse ? spouse.name : '';
             } else {
-              // If no parent or spouse, this is likely the proband or a top-level member
               const proband = familyMembers.find(m => m.id === 'proband');
               relatedMemberName = proband ? proband.name : '';
             }
@@ -1352,7 +1351,7 @@ const CancerPedigreeApp = () => {
           })}
         </div>
 
-        <div className="w-full lg:w-1/2 pl-4 mt-4 lg:mt-0">
+        <div className="w-full lg:w-1/2 pl-4 mt-4 lg:mt-0 sticky top-0">
           <div className="relative">
             <canvas 
               ref={canvasRef} 
@@ -1369,13 +1368,11 @@ const CancerPedigreeApp = () => {
         </div>
       </div>
 
-      <div className="ml-4 flex flex-col space-y-2" style={{ width: '10%' }}>
-        <a href="https://www.khcc.jo" target="_blank" rel="noopener noreferrer">
+      <div className="ml-4 flex flex-col space-y-3" style={{ width: '10%' }}>
+        <a href="https://www.khcc.jo" target="_blank" rel="noopener noreferrer" className="mb-4">
           <img src={logoImage} alt="KHCC Logo" className="w-full cursor-pointer" />
         </a>
-        <Button onClick={queryAI} className="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1">
-          <Cpu className="h-4 w-4 mr-2" /> AI
-        </Button>
+
         <Button 
           onClick={() => {
             if (window.confirm('Are you sure you want to start a new pedigree? This will clear all current data.')) {
@@ -1397,39 +1394,26 @@ const CancerPedigreeApp = () => {
               setScale(1);
             }
           }} 
-          className="bg-green-500 hover:bg-green-600 text-white text-xs py-1"
+          className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white text-xs py-2 shadow-md hover:shadow-lg transition-all duration-200"
         >
           New Pedigree
         </Button>
-        <Button 
-          onClick={() => {
-            setFamilyMembers([{
-              id: 'proband',
-              name: '',
-              sex: 'female',
-              ageAtDiagnosis: '',
-              cancers: '',
-              genetics: '',
-              isDead: false,
-              relationship: 'proband',
-              x: 325,
-              y: 325,
-              parentId: null
-            }]);
-            setFreeTextEntries([]);
-            setOffset({ x: 0, y: 0 });
-            setScale(1);
-          }} 
-          className="bg-red-500 hover:bg-red-600 text-white text-xs py-1"
-        >
-          Reset
+
+        <Button onClick={queryAI} 
+          className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-xs py-2 shadow-md hover:shadow-lg transition-all duration-200">
+          <Cpu className="h-4 w-4 mr-2" /> AI Analysis
         </Button>
-        <Button onClick={savePedigreeToPDF} className="bg-purple-500 hover:bg-purple-600 text-white text-xs py-1">
-          <FileText className="h-3 w-3 mr-1" /> PDF
+
+        <Button onClick={savePedigreeToPDF} 
+          className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white text-xs py-2 shadow-md hover:shadow-lg transition-all duration-200">
+          <FileText className="h-3 w-3 mr-1" /> Save PDF
         </Button>
-        <Button onClick={saveAsCSV} className="bg-yellow-500 hover:bg-yellow-600 text-white text-xs py-1">
-          <Download className="h-3 w-3 mr-1" /> CSV
+
+        <Button onClick={saveAsCSV} 
+          className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-xs py-2 shadow-md hover:shadow-lg transition-all duration-200">
+          <Download className="h-3 w-3 mr-1" /> Export CSV
         </Button>
+
         <input
           type="file"
           accept=".csv"
@@ -1437,22 +1421,37 @@ const CancerPedigreeApp = () => {
           style={{ display: 'none' }}
           id="csvFileInput"
         />
-        <Button onClick={() => document.getElementById('csvFileInput').click()} className="bg-orange-500 hover:bg-orange-600 text-white text-xs py-1">
-          <Upload className="h-3 w-3 mr-1" /> Load
+
+        <Button 
+          onClick={() => document.getElementById('csvFileInput').click()} 
+          className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-xs py-2 shadow-md hover:shadow-lg transition-all duration-200">
+          <Upload className="h-3 w-3 mr-1" /> Import CSV
         </Button>
+
+        <div className="border-t border-gray-200 my-2"></div>
+
         <Button 
           onClick={() => setShowFootnotes(!showFootnotes)} 
-          className="bg-teal-500 hover:bg-teal-600 text-white text-xs py-1"
+          className="bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white text-xs py-2 shadow-md hover:shadow-lg transition-all duration-200"
         >
-          {showFootnotes ? 'Hide' : 'Show'}
+          {showFootnotes ? 'Hide Notes' : 'Show Notes'}
         </Button>
-        <Button onClick={() => handleZoom(true)} className="bg-green-500 hover:bg-green-600 text-white text-xs py-1">
-          <ZoomIn className="h-3 w-3 mr-1" /> In
+
+        <Button 
+          onClick={() => handleZoom(true)} 
+          className="bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white text-xs py-2 shadow-md hover:shadow-lg transition-all duration-200">
+          <ZoomIn className="h-3 w-3 mr-1" /> Zoom In
         </Button>
-        <Button onClick={() => handleZoom(false)} className="bg-green-500 hover:bg-green-600 text-white text-xs py-1">
-          <ZoomOut className="h-3 w-3 mr-1" /> Out
+
+        <Button 
+          onClick={() => handleZoom(false)} 
+          className="bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white text-xs py-2 shadow-md hover:shadow-lg transition-all duration-200">
+          <ZoomOut className="h-3 w-3 mr-1" /> Zoom Out
         </Button>
-        <Button onClick={toggleInstructions} className="bg-gray-500 hover:bg-gray-600 text-white text-xs py-1">
+
+        <Button 
+          onClick={toggleInstructions} 
+          className="bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white text-xs py-2 shadow-md hover:shadow-lg transition-all duration-200">
           Instructions
         </Button>
       </div>
