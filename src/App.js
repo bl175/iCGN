@@ -942,7 +942,8 @@ const CancerPedigreeApp = () => {
   const saveAsCSV = () => {
     const headers = [
         "ID", "Name", "Sex", "Age at Diagnosis", "Cancers", "Genetics", 
-        "Is Deceased", "Relationship", "Parent ID"
+        "Is Deceased", "Relationship", "Parent ID", "Spouse ID", "Marriage Type",
+        "X Position", "Y Position"
     ];
 
     // Create a map to assign new IDs starting from 1
@@ -960,7 +961,11 @@ const CancerPedigreeApp = () => {
         member.genetics,
         member.isDead,
         member.relationship,
-        member.parentId ? idMap[member.parentId] : '' // Reference parent using new ID
+        member.parentId ? idMap[member.parentId] : '',
+        member.spouseId ? idMap[member.spouseId] : '',
+        member.marriageType || '',
+        member.x,
+        member.y
     ]);
 
     const csvString = [
@@ -1051,7 +1056,10 @@ const CancerPedigreeApp = () => {
                 'is deceased': 'isDead',
                 'relationship': 'relationship',
                 'parent id': 'parentId',
-                // Removed spouse id mapping
+                'spouse id': 'spouseId',
+                'marriage type': 'marriageType',
+                'x position': 'x',
+                'y position': 'y'
             };
 
             // Parse the CSV into member objects
@@ -1065,28 +1073,106 @@ const CancerPedigreeApp = () => {
                     if (mappedKey) {
                         if (mappedKey === 'isDead') {
                             member[mappedKey] = value === 'true';
+                        } else if (mappedKey === 'x' || mappedKey === 'y') {
+                            member[mappedKey] = parseFloat(value) || null;
                         } else {
-                            member[mappedKey] = value;
+                            member[mappedKey] = value || '';
                         }
                     }
                 });
-                return {
-                    ...member,
-                    x: null,
-                    y: null,
-                };
+                return member;
             });
 
-            // Assign IDs starting from 1 for proband and incrementing
+            // Create a map of old IDs to new IDs
+            const idMap = {};
             importedMembers.forEach((member, index) => {
-                member.id = (index + 1).toString(); // Set ID starting from 1
-                member.spouseId = null; // Ensure spouseId is removed
+                const oldId = member.id;
+                const newId = (index + 1).toString();
+                idMap[oldId] = newId;
+                member.id = newId;
             });
 
-            // Find the proband and set initial position
+            // Update relationships with new IDs
+            importedMembers.forEach(member => {
+                if (member.parentId) {
+                    member.parentId = idMap[member.parentId] || '';
+                }
+                if (member.spouseId) {
+                    member.spouseId = idMap[member.spouseId] || '';
+                }
+                
+                // Ensure x and y positions exist
+                if (member.x === undefined) member.x = null;
+                if (member.y === undefined) member.y = null;
+            });
+
+            // Find the proband
             const proband = importedMembers.find(m => m.relationship === 'proband') || importedMembers[0];
-            proband.x = 325;
-            proband.y = 325;
+            
+            // Only set default position for proband if x and y are not already set
+            if (proband.x === null || proband.y === null) {
+                proband.x = 325;
+                proband.y = 325;
+            }
+
+            // If any members are missing positions, calculate them
+            const membersWithoutPositions = importedMembers.some(m => m.x === null || m.y === null);
+            if (membersWithoutPositions) {
+                // Create a map of family members by ID for easy lookup
+                const membersById = {};
+                importedMembers.forEach(member => {
+                    membersById[member.id] = member;
+                });
+
+                // Keep track of visited members to avoid infinite loops
+                const visited = new Set();
+
+                // Recursive function to position members
+                const positionMembers = (memberId, defaultX, defaultY) => {
+                    if (visited.has(memberId)) return;
+                    visited.add(memberId);
+
+                    const member = membersById[memberId];
+                    if (!member) return;
+
+                    // Only set position if not already set
+                    if (member.x === null || member.y === null) {
+                        member.x = defaultX;
+                        member.y = defaultY;
+                    }
+
+                    // Position children
+                    const children = importedMembers.filter(m => m.parentId === memberId);
+                    children.forEach((child, index) => {
+                        const childX = member.x + index * 50;
+                        const childY = member.y + 100;
+                        positionMembers(child.id, childX, childY);
+                    });
+
+                    // Position spouse if exists
+                    if (member.spouseId) {
+                        const spouse = membersById[member.spouseId];
+                        if (spouse && !visited.has(spouse.id)) {
+                            const spouseX = member.x + 100;
+                            const spouseY = member.y;
+                            positionMembers(spouse.id, spouseX, spouseY);
+                        }
+                    }
+
+                    // Position parents
+                    if (member.parentId) {
+                        const parent = membersById[member.parentId];
+                        if (parent && !visited.has(parent.id)) {
+                            const parentX = member.x;
+                            const parentY = member.y - 100;
+                            positionMembers(parent.id, parentX, parentY);
+                        }
+                    }
+                };
+
+                // Start positioning from the proband for any members without positions
+                positionMembers(proband.id, proband.x, proband.y);
+            }
 
             // Update the state with imported and positioned members
             setFamilyMembers(importedMembers);
@@ -1290,21 +1376,52 @@ const CancerPedigreeApp = () => {
         <Button onClick={queryAI} className="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1">
           <Cpu className="h-4 w-4 mr-2" /> AI
         </Button>
-        <Button onClick={() => {
-          setFamilyMembers([{
-            id: 'proband',
-            name: '',
-            sex: 'female',
-            ageAtDiagnosis: '',
-            cancers: '',
-            genetics: '',
-            isDead: false,
-            relationship: 'proband',
-            x: 325,
-            y: 325,
-            parentId: null
-          }]);
-        }} className="bg-red-500 hover:bg-red-600 text-white text-xs py-1">
+        <Button 
+          onClick={() => {
+            if (window.confirm('Are you sure you want to start a new pedigree? This will clear all current data.')) {
+              setFamilyMembers([{
+                id: 'proband',
+                name: '',
+                sex: 'female',
+                ageAtDiagnosis: '',
+                cancers: '',
+                genetics: '',
+                isDead: false,
+                relationship: 'proband',
+                x: 325,
+                y: 325,
+                parentId: null
+              }]);
+              setFreeTextEntries([]);
+              setOffset({ x: 0, y: 0 });
+              setScale(1);
+            }
+          }} 
+          className="bg-green-500 hover:bg-green-600 text-white text-xs py-1"
+        >
+          New Pedigree
+        </Button>
+        <Button 
+          onClick={() => {
+            setFamilyMembers([{
+              id: 'proband',
+              name: '',
+              sex: 'female',
+              ageAtDiagnosis: '',
+              cancers: '',
+              genetics: '',
+              isDead: false,
+              relationship: 'proband',
+              x: 325,
+              y: 325,
+              parentId: null
+            }]);
+            setFreeTextEntries([]);
+            setOffset({ x: 0, y: 0 });
+            setScale(1);
+          }} 
+          className="bg-red-500 hover:bg-red-600 text-white text-xs py-1"
+        >
           Reset
         </Button>
         <Button onClick={savePedigreeToPDF} className="bg-purple-500 hover:bg-purple-600 text-white text-xs py-1">
@@ -1336,7 +1453,7 @@ const CancerPedigreeApp = () => {
           <ZoomOut className="h-3 w-3 mr-1" /> Out
         </Button>
         <Button onClick={toggleInstructions} className="bg-gray-500 hover:bg-gray-600 text-white text-xs py-1">
-          About iCGN
+          Instructions
         </Button>
       </div>
 
@@ -1383,12 +1500,11 @@ const CancerPedigreeApp = () => {
       )}
 
       {showInstructions && (
-        <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg max-h-96 overflow-y-auto">
-            <h2 className="text-xl font-bold mb-2">About iCGN</h2>
-            <p className="whitespace-pre-wrap">
-              {instructions}
-            </p>
+        <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-3/4 max-w-4xl max-h-[80vh] overflow-y-auto">
+            <div className="prose prose-sm max-w-none">
+              <div dangerouslySetInnerHTML={{ __html: instructions.replace(/\n/g, '<br>') }} />
+            </div>
             <Button onClick={toggleInstructions} className="mt-4">
               Close
             </Button>
