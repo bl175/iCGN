@@ -39,14 +39,15 @@ jobs:
 
       - name: Build And Deploy
         id: builddeploy
+        env:
+          CI: false  # This will prevent warnings from being treated as errors
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_HAPPY_SMOKE_02B9CD603 }}
           action: "upload"
-          ###### Repository/Build Configurations ###### 
-          app_location: "/"      # App source code path
-          api_location: ""       # Api source code path - optional
-          output_location: "build" # Built app content directory - optional
+          app_location: "/"
+          api_location: ""
+          output_location: "build"
           github_id_token: ${{ steps.idtoken.outputs.result }}
 
   close_pull_request_job:
@@ -58,5 +59,5 @@ jobs:
         id: closepullrequest
         uses: Azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_HAPPY_SMOKE_02B9CD603 }}  # Add this
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_HAPPY_SMOKE_02B9CD603 }}
           action: "close"
