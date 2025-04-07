@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { jsPDF } from "jspdf";
-import OpenAI from "openai";
+
 import logoImage from './images.png'; // Add this import at the top of the file
 import { instructions } from './instructions';
 
@@ -1219,74 +1219,29 @@ const CancerPedigreeApp = () => {
   };
 
 
+
   const queryAI = async () => {
     setIsAiThinking(true);
-    const openai = new OpenAI({
-      apiKey: process.env.REACT_APP_OPENAI_API_KEY,
-      openaiApiKey : process.env.REACT_APP_OPENAI_API_KEY,
-      dangerouslyAllowBrowser: true
-    });
-
-    // Create a table of all individuals
-    const familyTable = familyMembers.map(member => `
-      ID: ${member.id}
-      Name: ${member.name}
-      Sex: ${member.sex}
-      Age at Diagnosis of 1st cancer: ${member.ageAtDiagnosis}
-      Cancers: ${member.cancers}
-      Genetics: ${member.genetics}
-      Is Deceased: ${member.isDead ? 'Yes' : 'No'}
-      Relationship: ${member.relationship}
-    `).join('\n');
-
-    const prompt = `
-      You are an expert oncologist specializing in cancer genomics.
-      You are presented with the following family pedigree.
-      Look at the family pedigree and consider all cancers and genetics.
-      Try to find any patterns or relationships between cancers and genetics.
-      Think step by step.
-      Please provide your suggestion to the proband and close relatives.
-      Use plain text, do not include any markdown or html formatting or markdown code blocks.
-      Do not include special characters (e.g. *).
-      
-      Structure your response as follows:
-      
-      Provide possible explanations for the pattern of cancers and genetics.  
-      If you consider a specific cancer predisposition syndrome or mutation, provide the name of the syndrome or mutationand the specific genetic mutations associated with it.
-      if the family has other cancers that are unlikely to be related to the proband's cancers, mention them and provide possible explanations for them.
-      Proband:
-      1. Genetic Testing: Specify the type of test (e.g., BRCA1, BRCA2) and the expected results.
-      2. Genetic Counseling: Specify the type of counseling and the expected outcomes.
-      3. If applicable, mention any specific genetic diseases and potential treatment options.
-
-      Close Relatives:
-      1. Genetic Testing: Recommend specific tests for close relatives.
-      2. Genetic Counseling: Suggest counseling topics relevant to the family history.
-      3. Discuss potential implications for other family members.
-
-      Be concise and to the point. Tailor your recommendations based on the specific cancers and genetic information provided in the family pedigree.
-
-      Family Pedigree:
-      ${familyTable}
-
-      Response:
-    `; // Removed familyTable from the response
-
+    
     try {
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o",
-        
-        messages: [{"role": "user", "content": prompt}],
-        temperature: 0.7,
+      const response = await fetch('http://localhost:5000/api/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ familyMembers }),
       });
-
-      setAiResponse(completion.choices[0].message.content);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setAiResponse(data.response);
     } catch (error) {
       console.error('Error querying AI:', error);
       let errorMessage = 'Error querying AI. Please try again.';
-      if (error.response) {
-        errorMessage += ` Error: ${error.response.data.error.message}`;
-      } else {
+      if (error.message) {
         errorMessage += ` Error: ${error.message}`;
       }
       setAiResponse(errorMessage);
