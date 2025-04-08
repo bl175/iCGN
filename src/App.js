@@ -1089,8 +1089,8 @@ const CancerPedigreeApp = () => {
     setIsGeneratingNote(true);
     setMedicalNote('');
     
-    const url = 'http://localhost:5000/api/analyze'; // Use the working endpoint
-    console.log(`Using working endpoint: ${url}`);
+    const url = 'http://localhost:5000/api/generate-medical-note'; // Use the correct endpoint
+    console.log(`Using medical note endpoint: ${url}`);
     
     try {
       const response = await fetch(url, {
@@ -1099,8 +1099,7 @@ const CancerPedigreeApp = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
-          familyMembers,
-          requestType: 'medicalNote' // Add this flag to distinguish the request type
+          familyMembers
         }),
       });
       
@@ -1112,8 +1111,8 @@ const CancerPedigreeApp = () => {
       
       const data = await response.json();
       
-      // Since we're using the analyze endpoint, the response is in data.response
-      setMedicalNote(data.response || 'No medical note data received');
+      // The response is in data.medicalNote for this endpoint
+      setMedicalNote(data.medicalNote || 'No medical note data received');
       setShowMedicalNote(true);
     } catch (error) {
       console.error('Error generating medical note:', error);

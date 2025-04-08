@@ -76,64 +76,90 @@ app.post('/api/analyze', async (req, res) => {
   }
 });
 
-// Endpoint for generating medical note - PROPERLY DEFINED
+// Endpoint for generating medical note
 app.post('/api/generate-medical-note', async (req, res) => {
-  console.log('Received medical note generation request');
-  try {
-    const { familyMembers } = req.body;
-    
-    if (!familyMembers || !Array.isArray(familyMembers)) {
-      return res.status(400).json({ error: 'Invalid request body. Expected familyMembers array.' });
+    console.log('Received medical note generation request');
+    try {
+      const { familyMembers } = req.body;
+      
+      if (!familyMembers || !Array.isArray(familyMembers)) {
+        return res.status(400).json({ error: 'Invalid request body. Expected familyMembers array.' });
+      }
+      
+      // Find the proband
+      const proband = familyMembers.find(m => m.relationship === 'proband');
+      
+      // Create a text representation of family members with appropriate relationships
+      const familyMembersText = familyMembers.map(member => {
+        // Define relationship more precisely based on member data
+        let relationshipDescription = member.relationship;
+        
+        if (member.relationship === 'child') {
+          // Find the parent(s) of this child
+          const parent = familyMembers.find(m => m.id === member.parentId);
+          const parentName = parent ? parent.name : 'unknown parent';
+          relationshipDescription = `Child of ${parentName}`;
+        } else if (member.relationship === 'parent') {
+          // Find the child of this parent
+          const child = familyMembers.find(m => m.parentId === member.id);
+          const childName = child ? child.name : 'unknown child';
+          relationshipDescription = `Parent of ${childName}`;
+        } else if (member.relationship === 'unrelated_spouse' || member.relationship === 'related_spouse') {
+          // Find the spouse
+          const spouse = familyMembers.find(m => m.id === member.spouseId);
+          const spouseName = spouse ? spouse.name : 'unknown spouse';
+          relationshipDescription = `Spouse of ${spouseName}`;
+        }
+        
+        // Format the text for each family member
+        return `${relationshipDescription}: ${member.name || 'Unknown'}, ${member.sex || 'Unknown'} sex, ` +
+          `${member.ageAtDiagnosis ? 'diagnosed at age ' + member.ageAtDiagnosis : 'age at diagnosis unknown'}, ` +
+          `cancer diagnosis: ${member.cancers || 'None'}, ` +
+          `genetics: ${member.genetics || 'Unknown'}, ` +
+          `${member.isDead ? 'deceased' : 'living'}`;
+      }).join('\n');
+      
+      // Generate the medical note using OpenAI
+      const prompt = `
+        You are an expert oncologist writing a medical note for a cancer genetic counseling session.
+        Below is a text representation of a family pedigree for cancer risk assessment.
+        
+        IMPORTANT: The ages provided are AGES AT DIAGNOSIS, NOT current ages.
+        
+        # MEDICAL ONCOLOGY NOTE
+        
+        ## PATIENT INFORMATION
+        Patient Name: ${proband?.name || 'Unknown'}
+        Sex: ${proband?.sex || 'Unknown'}
+        Age at diagnosis: ${proband?.ageAtDiagnosis || 'Unknown'}
+        Cancer diagnosis: ${proband?.cancers || 'None'}
+        
+        ## FAMILY HISTORY
+        ${familyMembersText}
+        
+        Format the family history as a paragraph that clearly states each family member's relationship to the proband, 
+        their sex, cancer diagnosis with age at diagnosis (not current age), genetic status if known, and living status.
+        
+        For example: "The patient's father, John, was diagnosed with colon cancer at age 45, no known genetic mutations, deceased."
+        
+        Only include information about family members that is available in the text provided.
+        Do not add any analysis, recommendations, or comments - just format the family history information.
+      `;
+      
+      console.log('Calling OpenAI API for medical note');
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [{"role": "user", "content": prompt}],
+        temperature: 0.5, // Reduced temperature for more consistent formatting
+      });
+      
+      console.log('Received OpenAI response for medical note');
+      res.json({ medicalNote: completion.choices[0].message.content });
+    } catch (error) {
+      console.error('Error in /api/generate-medical-note:', error);
+      res.status(500).json({ error: error.message });
     }
-    
-    // Find the proband
-    const proband = familyMembers.find(m => m.relationship === 'proband');
-    
-    // Create a text representation of family members
-    const familyMembersText = familyMembers.map(member => 
-      `${member.relationship || 'Unknown relation'}: ${member.name || 'Unknown'}, ${member.sex || 'Unknown'} sex, ` +
-      `${member.ageAtDiagnosis ? 'age at diagnosis: ' + member.ageAtDiagnosis : 'age unknown'}, ` +
-      `cancer diagnosis: ${member.cancers || 'None'}, ` +
-      `genetics: ${member.genetics || 'Unknown'}, ` +
-      `${member.isDead ? 'deceased' : 'living'}`
-    ).join('\n');
-    
-    // Generate the medical note using OpenAI
-    const prompt = `
-      You are an expert oncologist writing a comprehensive medical note.
-      Below is a text representation of a family pedigree for cancer risk assessment.
-      
-      Please list each family member one by one with their age, sex, and diagnosis as provided in the text format below.
-      
-      # MEDICAL ONCOLOGY NOTE
-      
-      ## PATIENT INFORMATION
-      Patient Name: ${proband?.name || 'Unknown'}
-      Sex: ${proband?.sex || 'Unknown'}
-      
-      ## FAMILY HISTORY
-      ${familyMembersText}
-      
-      Just provide the family members, one by one, and their information in a paragraph form.  
-      Make no comments, just the list of family members with their information.
-      This will be used to generate a medical note for the proband.  
-      Any extra information is not needed.
-    `;
-    
-    console.log('Calling OpenAI API for medical note');
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [{"role": "user", "content": prompt}],
-      temperature: 0.7,
-    });
-    
-    console.log('Received OpenAI response for medical note');
-    res.json({ medicalNote: completion.choices[0].message.content });
-  } catch (error) {
-    console.error('Error in /api/generate-medical-note:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
+  });
 
 // Set port and start server
 const PORT = process.env.PORT || 5000;
