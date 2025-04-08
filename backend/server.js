@@ -114,7 +114,10 @@ app.post('/api/generate-medical-note', async (req, res) => {
       ## FAMILY HISTORY
       ${familyMembersText}
       
-      Just provide the family members, one by one, and their information in a paragraph form.
+      Just provide the family members, one by one, and their information in a paragraph form.  
+      Make no comments, just the list of family members with their information.
+      This will be used to generate a medical note for the proband.  
+      Any extra information is not needed.
     `;
     
     console.log('Calling OpenAI API for medical note');
