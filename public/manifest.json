@@ -1,6 +1,7 @@
 {
-  "short_name": "iCGN",
-  "name": "Intelligent Cancer Genomics Navigator",
+  "short_name": "Cancer Pedigree",
+  "name": "Cancer Pedigree Application",
+  "description": "A comprehensive tool for creating and analyzing cancer family histories",
   "icons": [
     {
       "src": "favicon.ico",
@@ -8,13 +9,28 @@
       "type": "image/x-icon"
     },
     {
-      "src": "logo192.png",
+      "src": "favicon-16x16.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "16x16"
+    },
+    {
+      "src": "favicon-32x32.png",
+      "type": "image/png",
+      "sizes": "32x32"
+    },
+    {
+      "src": "apple-touch-icon.png",
+      "type": "image/png",
+      "sizes": "180x180",
+      "purpose": "any maskable"
     }
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
+  "orientation": "any",
+  "categories": ["medical", "healthcare", "tools"],
+  "lang": "en-US",
+  "dir": "ltr"
 }
