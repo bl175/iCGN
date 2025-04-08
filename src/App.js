@@ -5,45 +5,27 @@ import logoImage from './images.png'; // Add this import at the top of the file
 import { instructions } from './instructions';
 
 import { Input } from "./components/ui/input"
-
 import { Label } from "./components/ui/label"
-
 import { Button } from "./components/ui/button"
-
 import { Card, CardHeader, CardTitle, CardContent } from "./components/ui/card"
-
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./components/ui/select"
-
-import { PlusCircle, ZoomIn, ZoomOut, Download, Upload, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, FileText, Clipboard, Loader2, Cpu } from 'lucide-react'
+import { PlusCircle, ZoomIn, ZoomOut, Download, Upload, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, FileText, Clipboard, Loader2, Cpu, FilePlus } from 'lucide-react'
 
 const PersonForm = ({ isProbant = false, onDelete, member, onUpdate, onAddRelative, parentName = '', isHighlighted = false, familyMembers, onFormClick }) => {
-
   const handleInputChange = (e) => {
-
     const { name, value } = e.target;
-
     let updatedMember = { ...member, [name]: value };
-
     
-
     // Automatically set hasDisease based on cancer field
-
     if (name === 'cancers') {
-
       updatedMember.hasDisease = value.trim() !== '';
-
     }
-
     
-
     onUpdate(updatedMember);
-
   };
 
   const handleSelectChange = (name, value) => {
-
     onUpdate({ ...member, [name]: value });
-
   };
 
   const isSpouse = member.relationship === 'related_spouse' || member.relationship === 'unrelated_spouse';
@@ -65,176 +47,103 @@ const PersonForm = ({ isProbant = false, onDelete, member, onUpdate, onAddRelati
   };
 
   return (
-
     <Card 
       className={`w-full max-w-2xl mx-auto mb-4 ${isHighlighted ? 'ring-2 ring-blue-500' : ''}`}
       id={`form-${member.id}`}
     >
-
       <CardHeader>
-
         <CardTitle>{getFormTitle()}</CardTitle>
-
       </CardHeader>
 
       <CardContent>
-
         <form className="grid grid-cols-2 gap-4">
-
           <div>
-
             <Label htmlFor="name">Name</Label>
-
             <Input
-
               id="name"
-
               name="name"
-
               value={member.name || ''}
-
               onChange={handleInputChange}
-
               onFocus={handleInteraction}
-
               onClick={handleInteraction}
-
               placeholder="Enter name"
-
               required
-
             />
-
           </div>
 
           <div>
-
             <Label htmlFor="sex">Sex</Label>
-
             <Select 
               onValueChange={(value) => handleSelectChange('sex', value)} 
               value={member.sex || 'female'}
               onFocus={handleInteraction}
               onClick={handleInteraction}
             >
-
               <SelectTrigger className="bg-white">
-
                 <SelectValue placeholder="Select sex" />
-
               </SelectTrigger>
-
               <SelectContent className="bg-white">
-
                 <SelectItem value="male">Male</SelectItem>
-
                 <SelectItem value="female">Female</SelectItem>
-
               </SelectContent>
-
             </Select>
-
           </div>
 
           <div>
-
             <Label htmlFor="ageAtDiagnosis">Age at Diagnosis of 1st cancer</Label>
-
             <Input
-
               id="ageAtDiagnosis"
-
               name="ageAtDiagnosis"
-
               value={member.ageAtDiagnosis || ''}
-
               onChange={handleInputChange}
-
               onFocus={handleInteraction}
-
               onClick={handleInteraction}
-
               placeholder="Enter age at diagnosis of 1st cancer"
-
             />
-
           </div>
 
           <div>
-
             <Label htmlFor="cancers">Cancer(s)</Label>
-
             <Input
-
               id="cancers"
-
               name="cancers"
-
               value={member.cancers || ''}
-
               onChange={handleInputChange}
-
               onFocus={handleInteraction}
-
               onClick={handleInteraction}
-
               placeholder="Enter cancer types"
-
             />
-
           </div>
 
           <div>
-
             <Label htmlFor="genetics">Genetic(s)</Label>
-
             <Input
-
               id="genetics"
-
               name="genetics"
-
               value={member.genetics || ''}
-
               onChange={handleInputChange}
-
               onFocus={handleInteraction}
-
               onClick={handleInteraction}
-
               placeholder="Enter genetic information"
-
             />
-
           </div>
 
           <div>
-
             <Label htmlFor="isDead">Is Deceased</Label>
-
             <Select 
               onValueChange={(value) => handleSelectChange('isDead', value === 'true')} 
               value={(member.isDead || false).toString()} 
               onFocus={handleInteraction} 
               onClick={handleInteraction}
             >
-
               <SelectTrigger className="bg-white">
-
                 <SelectValue placeholder="Select living status" />
-
               </SelectTrigger>
-
-              <SelectContent >
-
+              <SelectContent>
                 <SelectItem value="true">Yes</SelectItem>
-
                 <SelectItem value="false">No</SelectItem>
-
               </SelectContent>
-
             </Select>
-
           </div>
 
           {isSpouse && (
@@ -285,15 +194,10 @@ const PersonForm = ({ isProbant = false, onDelete, member, onUpdate, onAddRelati
               )}
             </div>
           </div>
-
         </form>
-
       </CardContent>
-
     </Card>
-
   );
-
 };
 
 const Legend = ({ cancerTypes }) => (
@@ -312,43 +216,25 @@ const Legend = ({ cancerTypes }) => (
 );
 
 const CancerPedigreeApp = () => {
-
   const [familyMembers, setFamilyMembers] = useState([{
-
     id: 'proband',
-
     name: '',
-
     sex: 'female',
-
     ageAtDiagnosis: '',
-
     cancers: '',
-
     genetics: '',
-
     isDead: false,
-
     relationship: 'proband',
-
     x: 325,
-
     y: 325,
-
     parentId: null
-
   }]);
 
   const canvasRef = useRef(null);
-
   const [scale, setScale] = useState(1);
-
   const [offset, setOffset] = useState({ x: 0, y: 0 });
-
   const [dragging, setDragging] = useState(null);
-
   const [highlightedMember, setHighlightedMember] = useState('proband');
-
   const [showFootnotes, setShowFootnotes] = useState(true);
 
   const cancerTypes = {
@@ -374,21 +260,19 @@ const CancerPedigreeApp = () => {
   const [freeTextEntries, setFreeTextEntries] = useState([]);
   const [isPanning, setIsPanning] = useState(false);
   const [lastPanPoint, setLastPanPoint] = useState(null);
-
   const [editingText, setEditingText] = useState(null);
-
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [showOptions, setShowOptions] = useState(false);
-
   const [justFinishedPanning, setJustFinishedPanning] = useState(false);
-
   const [aiResponse, setAiResponse] = useState('');
-
   const [isAiThinking, setIsAiThinking] = useState(false);
-
   const [showInstructions, setShowInstructions] = useState(false);
-
   const [undoStack, setUndoStack] = useState([]); // Stack to keep track of movements for undo
+
+  // Add state for medical note
+  const [medicalNote, setMedicalNote] = useState('');
+  const [isGeneratingNote, setIsGeneratingNote] = useState(false);
+  const [showMedicalNote, setShowMedicalNote] = useState(false);
 
   const toggleInstructions = () => {
     setShowInstructions(prev => !prev);
@@ -476,86 +360,50 @@ const CancerPedigreeApp = () => {
   };
 
   const deleteFamilyMember = (id) => {
-
     setFamilyMembers(prevMembers => prevMembers.filter(member => member.id !== id && member.parentId !== id));
-
   };
 
   const updateFamilyMember = (updatedMember) => {
-
     setFamilyMembers(prevMembers => 
-
       prevMembers.map(member => {
-
         if (member.id === updatedMember.id) {
-
           let newX = member.x;
-
           let newY = member.y;
-
           const parent = familyMembers.find(m => m.id === member.parentId);
           
-
           // Update position based on relationship
-
           if (parent && updatedMember.relationship !== member.relationship) {
-
             switch (updatedMember.relationship) {
-
               case 'parent':
-
                 newX = parent.x;
-
                 newY = parent.y - 100;
-
                 break;
-
               case 'child':
-
                 newX = parent.x;
-
                 newY = parent.y + 100;
-
                 break;
-
               case 'related_spouse':
-
               case 'unrelated_spouse':
-
                 newX = parent.x + 100;
-
                 newY = parent.y;
-
                 break;
-
+              default:
+                break;
             }
-
           }
-
           
-
           return { ...member, ...updatedMember, x: newX, y: newY };
-
         }
-
         return member;
-
       })
-
     );
-
   };
 
   const handleZoom = (zoomIn) => {
-
     setScale(prevScale => {
-
       const newScale = zoomIn ? prevScale + 0.1 : prevScale - 0.1;
-
       return Math.max(0.1, Math.min(newScale, 5));
-
     });
-
   };
 
   const handleKeyDown = (e) => {
@@ -939,6 +787,25 @@ const CancerPedigreeApp = () => {
     pdf.save("pedigree.pdf");
   };
 
+  const saveMedicalNoteToPDF = () => {
+    if (!medicalNote) return;
+
+    // Create the PDF 
+    const pdf = new jsPDF();
+    
+    // Set font size and type
+    pdf.setFontSize(12);
+    
+    // Split the text into lines that fit the page width
+    const lines = pdf.splitTextToSize(medicalNote, 180);
+    
+    // Add the lines to the PDF
+    pdf.text(lines, 15, 20);
+    
+    // Save the PDF
+    pdf.save("medical_note.pdf");
+  };
+
   const saveAsCSV = () => {
     const headers = [
         "ID", "Name", "Sex", "Age at Diagnosis", "Cancers", "Genetics", 
@@ -985,6 +852,7 @@ const CancerPedigreeApp = () => {
         document.body.removeChild(link);
     }
   };
+  
   const makePedigree = (familyMembers) => {
     // Create a map of family members by ID for easy lookup
     const membersById = {};
@@ -1035,7 +903,6 @@ const CancerPedigreeApp = () => {
 
     return familyMembers;
   };
-
 
   const importFromCSV = (event) => {
     const file = event.target.files[0];
@@ -1179,7 +1046,7 @@ const CancerPedigreeApp = () => {
         };
         reader.readAsText(file);
     }
-};
+  };
 
   const handleMove = (direction) => {
     const moveAmount = 10;
@@ -1218,8 +1085,44 @@ const CancerPedigreeApp = () => {
     setShowOptions(false);
   };
 
-
-
+  const generateMedicalNote = async () => {
+    setIsGeneratingNote(true);
+    setMedicalNote('');
+    
+    const url = 'http://localhost:5000/api/analyze'; // Use the working endpoint
+    console.log(`Using working endpoint: ${url}`);
+    
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          familyMembers,
+          requestType: 'medicalNote' // Add this flag to distinguish the request type
+        }),
+      });
+      
+      console.log(`Response status: ${response.status}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Since we're using the analyze endpoint, the response is in data.response
+      setMedicalNote(data.response || 'No medical note data received');
+      setShowMedicalNote(true);
+    } catch (error) {
+      console.error('Error generating medical note:', error);
+      setMedicalNote(`Error generating medical note: ${error.message}`);
+      setShowMedicalNote(true);
+    } finally {
+      setIsGeneratingNote(false);
+    }
+  };
   const queryAI = async () => {
     setIsAiThinking(true);
     
@@ -1250,9 +1153,9 @@ const CancerPedigreeApp = () => {
     }
   };
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(aiResponse).then(() => {
-      alert('Response copied to clipboard!');
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+      alert('Content copied to clipboard!');
     }, (err) => {
       console.error('Could not copy text: ', err);
     });
@@ -1359,6 +1262,16 @@ const CancerPedigreeApp = () => {
           <Cpu className="h-4 w-4 mr-2" /> AI Analysis
         </Button>
 
+        {/* Added Medical Report Button */}
+        <Button 
+          onClick={generateMedicalNote} 
+          className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white text-xs py-2 shadow-md hover:shadow-lg transition-all duration-200"
+          disabled={isGeneratingNote}
+        >
+          <FilePlus className="h-4 w-4 mr-2" /> 
+          {isGeneratingNote ? 'Generating...' : 'Generate Report'}
+        </Button>
+
         <Button onClick={savePedigreeToPDF} 
           className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white text-xs py-2 shadow-md hover:shadow-lg transition-all duration-200">
           <FileText className="h-3 w-3 mr-1" /> Save PDF
@@ -1409,81 +1322,113 @@ const CancerPedigreeApp = () => {
           className="bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white text-xs py-2 shadow-md hover:shadow-lg transition-all duration-200">
           Instructions
         </Button>
-      </div>
-
-      {editingText && (
-        <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-4 rounded">
-            <Input
-              type="text"
-              value={editingText.text}
-              onChange={(e) => setEditingText({...editingText, text: e.target.value})}
-              className="mb-2"
-            />
-            <Button onClick={() => {
-              setFreeTextEntries(prev => prev.map(entry => 
-                entry.id === editingText.id ? editingText : entry
-              ));
-              setEditingText(null);
-            }}>
-              Save
-            </Button>
-            <Button onClick={() => setEditingText(null)} className="ml-2">
-              Cancel
-            </Button>
-          </div>
         </div>
-      )}
 
-      {showOptions && (
-        <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-4 rounded">
-            <Button onClick={() => handleOptionSelect('Edit')}>Edit</Button>
-            <Button onClick={() => handleOptionSelect('Delete')}>Delete</Button>
-          </div>
-        </div>
-      )}
-
-      {isAiThinking && (
-        <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg shadow-lg flex flex-col items-center">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-500 mb-4" />
-            <p className="text-lg font-semibold">AIDI is thinking...</p>
-          </div>
-        </div>
-      )}
-
-      {showInstructions && (
-        <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-3/4 max-w-4xl max-h-[80vh] overflow-y-auto">
-            <div className="prose prose-sm max-w-none">
-              <div dangerouslySetInnerHTML={{ __html: instructions.replace(/\n/g, '<br>') }} />
-            </div>
-            <Button onClick={toggleInstructions} className="mt-4">
-              Close
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {aiResponse && (
-        <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-4 rounded max-w-lg max-h-96 overflow-y-auto">
-            <h2 className="text-xl font-bold mb-2">AI Response:</h2>
-            <p className="whitespace-pre-wrap">{aiResponse}</p>
-            <div className="mt-4 flex justify-between">
-              <Button onClick={() => setAiResponse('')}>
-                Close
-              </Button>
-              <Button onClick={copyToClipboard} className="flex items-center">
-                <Clipboard className="h-4 w-4 mr-2" /> Copy to Clipboard
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+{/* Modals */}
+{editingText && (
+  <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center">
+    <div className="bg-white p-4 rounded">
+      <Input
+        type="text"
+        value={editingText.text}
+        onChange={(e) => setEditingText({...editingText, text: e.target.value})}
+        className="mb-2"
+      />
+      <Button onClick={() => {
+        setFreeTextEntries(prev => prev.map(entry => 
+          entry.id === editingText.id ? editingText : entry
+        ));
+        setEditingText(null);
+      }}>
+        Save
+      </Button>
+      <Button onClick={() => setEditingText(null)} className="ml-2">
+        Cancel
+      </Button>
     </div>
-  );
+  </div>
+)}
+
+{showOptions && (
+  <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center">
+    <div className="bg-white p-4 rounded">
+      <Button onClick={() => handleOptionSelect('Edit')}>Edit</Button>
+      <Button onClick={() => handleOptionSelect('Delete')}>Delete</Button>
+    </div>
+  </div>
+)}
+
+{isAiThinking && (
+  <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center">
+    <div className="bg-white p-6 rounded-lg shadow-lg flex flex-col items-center">
+      <Loader2 className="h-8 w-8 animate-spin text-blue-500 mb-4" />
+      <p className="text-lg font-semibold">AIDI is thinking...</p>
+    </div>
+  </div>
+)}
+
+{isGeneratingNote && (
+  <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center">
+    <div className="bg-white p-6 rounded-lg shadow-lg flex flex-col items-center">
+      <Loader2 className="h-8 w-8 animate-spin text-blue-500 mb-4" />
+      <p className="text-lg font-semibold">Generating Medical Note...</p>
+    </div>
+  </div>
+)}
+
+{showInstructions && (
+  <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="bg-white p-6 rounded-lg shadow-lg w-3/4 max-w-4xl max-h-[80vh] overflow-y-auto">
+      <div className="prose prose-sm max-w-none">
+        <div dangerouslySetInnerHTML={{ __html: instructions.replace(/\n/g, '<br>') }} />
+      </div>
+      <Button onClick={toggleInstructions} className="mt-4">
+        Close
+      </Button>
+    </div>
+  </div>
+)}
+
+{aiResponse && (
+  <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center">
+    <div className="bg-white p-4 rounded max-w-lg max-h-96 overflow-y-auto">
+      <h2 className="text-xl font-bold mb-2">AI Response:</h2>
+      <p className="whitespace-pre-wrap">{aiResponse}</p>
+      <div className="mt-4 flex justify-between">
+        <Button onClick={() => setAiResponse('')}>
+          Close
+        </Button>
+        <Button onClick={() => copyToClipboard(aiResponse)} className="flex items-center">
+          <Clipboard className="h-4 w-4 mr-2" /> Copy to Clipboard
+        </Button>
+      </div>
+    </div>
+  </div>
+)}
+
+{showMedicalNote && medicalNote && (
+  <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center">
+    <div className="bg-white p-4 rounded max-w-2xl max-h-[80vh] overflow-y-auto">
+      <h2 className="text-xl font-bold mb-2">Medical Note:</h2>
+      <div className="whitespace-pre-wrap font-mono text-sm">{medicalNote}</div>
+      <div className="mt-4 flex justify-between">
+        <Button onClick={() => setShowMedicalNote(false)}>
+          Close
+        </Button>
+        <div className="flex space-x-2">
+          <Button onClick={() => copyToClipboard(medicalNote)} className="flex items-center">
+            <Clipboard className="h-4 w-4 mr-2" /> Copy to Clipboard
+          </Button>
+          <Button onClick={saveMedicalNoteToPDF} className="flex items-center">
+            <Download className="h-4 w-4 mr-2" /> Save as PDF
+          </Button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+</div>
+);
 };
 
 export default CancerPedigreeApp;
